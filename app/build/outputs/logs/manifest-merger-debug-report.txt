@@ -1,0 +1,111 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:2:1-47:12
+	package
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:3:7-35
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+	android:versionName
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:5:7-32
+	android:versionCode
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:4:7-30
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:2:11-69
+uses-sdk
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:6:5-72
+	android:targetSdkVersion
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:6:41-69
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:6:15-40
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+		INJECTED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:7:5-81
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:7:22-78
+uses-permission#android.permission.RECORD_AUDIO
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:8:5-71
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:8:22-68
+application
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:9:5-46:19
+	android:label
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:9:48-80
+	android:icon
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:9:18-47
+activity#com.midisheetmusic.MidiSheetMusicActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:16:9-24:20
+	android:screenOrientation
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:17:19-56
+	android:label
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:19:19-51
+	android:configChanges
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:18:19-54
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:16:19-57
+intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:20:13-23:29
+action#android.intent.action.MAIN
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:21:17-69
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:21:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:22:17-77
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:22:27-74
+activity#com.midisheetmusic.ChooseSongActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:25:9-26:20
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:25:19-53
+activity#com.midisheetmusic.FileBrowserActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:27:9-28:20
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:27:19-54
+activity#com.midisheetmusic.AllSongsActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:29:9-30:20
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:29:19-51
+activity#com.midisheetmusic.RecentSongsActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:31:9-32:20
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:31:19-54
+activity#com.midisheetmusic.SettingsActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:33:9-34:20
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:33:19-51
+activity#com.midisheetmusic.HelpActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:35:9-36:20
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:35:19-47
+activity#com.midisheetmusic.SheetMusicActivity
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:37:9-45:20
+	android:screenOrientation
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:38:19-56
+	android:configChanges
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:39:19-54
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:37:19-53
+intent-filter#android.intent.action.VIEW+android.intent.category.DEFAULT
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:40:13-44:29
+action#android.intent.action.VIEW
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:41:17-69
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:41:25-66
+category#android.intent.category.DEFAULT
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:42:17-76
+	android:name
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:42:27-73
+data
+ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:43:17-120
+	android:host
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:43:46-62
+	android:scheme
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:43:23-44
+	android:pathPattern
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:43:63-93
+	android:mimeType
+		ADDED from /Users/rpang/GitHub/midi/app/src/main/AndroidManifest.xml:43:94-116
