@@ -68,7 +68,7 @@ public class MidiOptions implements Serializable {
 
     /* Initialize the default settings/options for the given MidiFile */
     public MidiOptions(MidiFile midifile) {
-        showPiano = true;
+        showPiano = false;
         int num_tracks = midifile.getTracks().size();
         tracks = new boolean[num_tracks];
         mute = new boolean[num_tracks];

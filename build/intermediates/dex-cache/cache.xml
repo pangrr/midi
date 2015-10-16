@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/rpang/GitHub/midi/app/src/main/resources/JTransforms-3.1-with-dependencies.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="82f06f64b95f4d1da1dfc7dec02628a157ce8692">
+        <dex dex="/Users/rpang/GitHub/midi/app/build/intermediates/pre-dexed/debug/JTransforms-3.1-with-dependencies-ac82ae464cb00f7f32bdfb30916c98bd51c55131.jar" />
+    </item>
+
+</items>

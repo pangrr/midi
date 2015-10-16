@@ -28,6 +28,16 @@ public class FileWriter {
 		}
 		writeFile(fileName, sb.toString());
 	}
+
+	public static void writeMidiMatrix(String fileName, MidiFile midiFile) {
+		StringBuffer sb = new StringBuffer();
+		for(MidiTrack track: midiFile.getTracks()) {
+			for(MidiNote note: track.getNotes()) {
+				sb.append(note2String(note) + "\n");
+			}
+		}
+		writeFile(fileName, sb.toString());
+	}
 	
 	private static String note2String(MidiNote note) {
 		return Integer.toString(note.getNumber()) + "," + Integer.toString(note.getStartTime()) + "," + Integer.toString(note.getEndTime());

@@ -89,7 +89,7 @@ public class SheetMusicActivity extends Activity {
         options.scrollVert = settings.getBoolean("scrollVert", true);
         options.shade1Color = settings.getInt("shade1Color", options.shade1Color);
         options.shade2Color = settings.getInt("shade2Color", options.shade2Color);
-        options.showPiano = settings.getBoolean("showPiano", true);
+        options.showPiano = settings.getBoolean("showPiano", false);
         String json = settings.getString("" + midiCRC, null);
         MidiOptions savedOptions = MidiOptions.fromJson(json);
         if (savedOptions != null) {
