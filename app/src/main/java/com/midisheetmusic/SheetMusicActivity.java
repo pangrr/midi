@@ -72,7 +72,8 @@ public class SheetMusicActivity extends Activity {
         try {
             data = file.getData(this);
             midifile = new MidiFile(data, title);
-            FileWriter.writeTrack("track1.txt", midifile.getTracks().get(0));
+            MidiSegments midiSegments = new MidiSegments(midifile);
+            midiSegments.writeFile("segments.txt");
         }
         catch (MidiFileException e) {
             this.finish();

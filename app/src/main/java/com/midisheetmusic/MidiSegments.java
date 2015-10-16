@@ -21,12 +21,31 @@ public class MidiSegments {
     }
 
     public void writeFile(String fileName) {
+        FileWriter.writeFile(fileName, toString());
+    }
 
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        for(Segment segment: segments) {
+            sb.append(Integer.toString(segment.getStartTime()));
+            sb.append(",");
+            sb.append(Integer.toString(segment.getEndTime()));
+            for(int noteNumber: segment.getNoteNumbers()) {
+                sb.append(",");
+                sb.append(noteNumber);
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     private List<Segment> parseMidiFile(MidiFile midiFile) {
         /* Get all the note numbers for each pulse. */
-        Pulse[] pulseArray = new Pulse[midiFile.getTotalPulses()];
+        Pulse[] pulseArray = new Pulse[midiFile.getTotalPulses()+1];
+        for(int i = 0; i < pulseArray.length; i++) {
+            pulseArray[i] = new Pulse();
+        }
         for(MidiTrack track: midiFile.getTracks()) {
             for(MidiNote note: track.getNotes()) {
                 int noteNumber = note.getNumber();
