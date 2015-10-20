@@ -1,9 +1,7 @@
 package com.midisheetmusic;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by rpang on 10/15/15.
@@ -40,17 +38,33 @@ public class MidiSegments {
         return sb.toString();
     }
 
+    public Segment getSegment(int index) {
+        return segments.get(index);
+    }
+
+    public int getSegmentSize() {
+        return segments.size();
+    }
+
+    /* Get the start time in pulses of the first segment. */
+    public int getStartTime() {
+        if(segments == null || segments.isEmpty()) {
+            return -1;
+        } else {
+            return segments.get(0).getStartTime();
+        }
+    }
+
     private List<Segment> parseMidiFile(MidiFile midiFile) {
-        /* Get all the note numbers for each pulse. */
+        /* Get all the note for each pulse. */
         Pulse[] pulseArray = new Pulse[midiFile.getTotalPulses()+1];
         for(int i = 0; i < pulseArray.length; i++) {
             pulseArray[i] = new Pulse();
         }
         for(MidiTrack track: midiFile.getTracks()) {
             for(MidiNote note: track.getNotes()) {
-                int noteNumber = note.getNumber();
-                for(int i = note.getStartTime(); i <= note.getEndTime(); i++) {
-                    pulseArray[i].addNoteNumber(noteNumber);
+                for(int i = note.getStartTime(); i < note.getEndTime(); i++) {
+                    pulseArray[i].addNote(note);
                 }
             }
         }
@@ -63,78 +77,22 @@ public class MidiSegments {
 
         for(int i = 0; i < pulseArray.length; i++) {
             curPulse = pulseArray[i];
-            if(curPulse.hasNewNoteNumber(prePulse)) {
-                if(segment != null) {   // End of current segment.
-                    segment.setEndTime(i-1);
+            if(curPulse.hasNewNote(prePulse)) {   // End of current segment.
+                if(segment != null) {
+                    segment.complete(i-1);
                     segments.add(segment);
                 }
                 segment = new Segment(i);   // Create new segment.
             }
             if(segment != null) {
-                segment.addNoteNumbers(curPulse.getNoteNumbers());
+                segment.addNotes(curPulse.getNotes());
             }
             prePulse = curPulse;
         }
         if(segment != null) {
+            segment.complete(pulseArray.length - 1);
             segments.add(segment);
         }
         return segments;
     }
-
-    public class Segment {
-        private int startTime; // Start time of this segment in terms of pulses.
-        private int endTime; // End time of this segment in terms of pulses.
-        private Set<Integer> noteNumbers; // Numbers of all notes in this segment.
-
-        public Segment(int startTime) {
-            this.startTime = startTime;
-            this.endTime = startTime;
-            this.noteNumbers = new HashSet<Integer>();
-        }
-
-        public void addNoteNumbers(Set<Integer> noteNumbers) {
-            this.noteNumbers.addAll(noteNumbers);
-        }
-
-        public int getStartTime() {
-            return startTime;
-        }
-
-        public int getEndTime() {
-            return endTime;
-        }
-
-        public Set<Integer> getNoteNumbers() {
-            return noteNumbers;
-        }
-
-        public boolean setEndTime(int endTime) {
-            if(endTime <= this.startTime) {
-                return false;
-            }
-            this.endTime = endTime;
-            return true;
-        }
-    }
-
-    public class Pulse {
-        private Set<Integer> noteNumbers;
-        public Pulse() {
-            noteNumbers = new HashSet<Integer>();
-        }
-        public void addNoteNumber(int noteNumber) {
-            noteNumbers.add(noteNumber);
-        }
-        public boolean removeNoteNumber(int noteNumber) {
-            return noteNumbers.remove(noteNumber);
-        }
-        public Set<Integer> getNoteNumbers() {
-            return noteNumbers;
-        }
-        public boolean hasNewNoteNumber(Pulse anotherPulse) {
-            return !anotherPulse.getNoteNumbers().containsAll(noteNumbers);
-        }
-    }
-
-
 }
