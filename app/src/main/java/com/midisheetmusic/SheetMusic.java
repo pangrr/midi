@@ -75,8 +75,8 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
     private boolean  surfaceReady;    /** True if we can draw on the surface */
     private Bitmap   bufferBitmap;    /** The bitmap for drawing */
     private Canvas   bufferCanvas;    /** The canvas for drawing */
-    private MidiPlayer player;        /** For pausing the music */
-    private int      playerHeight;    /** Height of the midi player */
+    private Recorder recorder;        /** For pausing the music */
+    private int      recorderHeight;    /** Height of the midi player */
     private int      screenwidth;     /** The screen width */
     private int      screenheight;    /** The screen height */
 
@@ -101,7 +101,7 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
         Activity activity = (Activity)context;
         screenwidth = activity.getWindowManager().getDefaultDisplay().getWidth();
         screenheight = activity.getWindowManager().getDefaultDisplay().getHeight();
-        playerHeight = MidiPlayer.getPreferredSize(screenwidth, screenheight).y;
+        recorderHeight = Recorder.getPreferredSize(screenwidth, screenheight).y;
     }
 
     /** Create a new SheetMusic View.
@@ -247,7 +247,7 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
             zoom = (float)((newwidth - 2) * 1.0 / PageWidth);
         }
         else {
-            zoom = (float)( (newheight + playerHeight) * 1.0 / sheetheight);
+            zoom = (float)( (newheight + recorderHeight) * 1.0 / sheetheight);
             if (zoom < 0.9)
                 zoom = 0.9f;
             if (zoom > 1.1)
@@ -946,12 +946,12 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
         }
         if (scrollVert) {
             bufferBitmap = Bitmap.createBitmap(viewwidth, 
-                                               (viewheight + playerHeight) * 2, 
+                                               (viewheight + recorderHeight) * 2,
                                                Bitmap.Config.ARGB_8888);
         }
         else {
             bufferBitmap = Bitmap.createBitmap(viewwidth * 2, 
-                                               (viewheight + playerHeight) * 2, 
+                                               (viewheight + recorderHeight) * 2,
                                                Bitmap.Config.ARGB_8888);
         }
 
@@ -1384,9 +1384,9 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
         boolean result = scrollAnimation.onTouchEvent(event);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                // If we touch while music is playing, stop the midi player 
-                if (player != null && player.getVisibility() == View.GONE) {
-                    player.Pause();
+                // If we touch while music is playing, stop the midi recorder
+                if (recorder != null && recorder.getVisibility() == View.GONE) {
+                    recorder.Pause();
                     scrollAnimation.stopMotion();
                 }
                 return result;
@@ -1413,13 +1413,13 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
 
     /** When the scroll is tapped, highlight the position tapped */
     public void scrollTapped(int x, int y) {
-        if (player != null) {
-            player.MoveToClicked(scrollX + x, scrollY + y);
+        if (recorder != null) {
+            recorder.MoveToClicked(scrollX + x, scrollY + y);
         }
     }
 
-    public void setPlayer(MidiPlayer p) {
-        player = p;
+    public void setRecorder(Recorder r) {
+        recorder = r;
     }
     
     public void

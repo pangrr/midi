@@ -90,8 +90,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="JTransforms-3.1-with-dependencies" level="project" />
     <orderEntry type="library" exported="" name="JTransforms-3.1-javadoc" level="project" />
-    <orderEntry type="library" exported="" name="commons-math3-3.5" level="project" />
-    <orderEntry type="library" exported="" name="commons-math3-3.5-javadoc" level="project" />
     <orderEntry type="library" exported="" name="JTransforms-3.1-sources" level="project" />
   </component>
 </module>

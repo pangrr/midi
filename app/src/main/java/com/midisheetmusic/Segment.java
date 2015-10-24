@@ -11,14 +11,16 @@ public class Segment {
     private int endTime; // End time (inclusive) of this segment in terms of pulses.
     private Set<Integer> noteNumbers; // Numbers of all notes in this segment.
     private Set<MidiNote> notes; // All notes in this segment.
-    private double[] chromaFeature;
+    private double[] chromaFeature  = new double[12];
 
     public Segment(int startTime) {
         this.startTime = startTime;
         this.endTime = startTime;
         this.noteNumbers = new HashSet<Integer>();
         this.notes = new HashSet<MidiNote>();
-        this.chromaFeature = new double[12];
+        for(int i = 0; i < chromaFeature.length; i++) {
+            chromaFeature[i] = 0.0;
+        }
     }
 
     public boolean complete(int endTime) {
@@ -71,11 +73,18 @@ public class Segment {
 
     private void computeChromaFeature() {
         int[] count = new int[chromaFeature.length];
+        for(int i = 0; i < chromaFeature.length; i++) {
+            count[i] = 0;
+        }
         for(int noteNumber: noteNumbers) {
             count[(noteNumber - 5) % 12]++;
         }
         for(int i = 0; i < count.length; i++) {
-            chromaFeature[i] = count[i] / Math.pow(count[i], 0.5);
+            if(count[i] == 0) {
+                chromaFeature[i] = 0.0;
+            } else {
+                chromaFeature[i] = count[i] / Math.sqrt(count[i]);
+            }
         }
     }
 }

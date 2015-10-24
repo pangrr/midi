@@ -1,6 +1,7 @@
 package com.midisheetmusic;
 
-import org.apache.commons.math3.distribution.NormalDistribution;
+
+import java.util.Random;
 
 /**
  * Created by rpang on 10/18/15.
@@ -9,25 +10,25 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 public class Particle {
     private double position; // Position of this particle in the MidiFile in terms of pulse.
     private double speed;
-    private NormalDistribution random;
+    private Random random;
     private int segment;    // Position in terms of segment.
     private double weight;
 
     public Particle(double position, double baseSpeed, int segment) {
-        random = new NormalDistribution();
+        random = new Random();
         this.position = position;
-        this.speed = baseSpeed + random.sample();
+        this.speed = baseSpeed + random.nextGaussian();
         this.segment = segment;
-        this.weight = 0;
+        this.weight = 0.0;
     }
 
-
-
-
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
 
     public void setWeight(MidiSegments segments, double[] audioChromaFeature) {
         double chromaFeatureSimilarity = getChromaFeatureSimilarity(segments, audioChromaFeature);
-        weight = Math.exp(chromaFeatureSimilarity) / Math.pow(2*Math.PI, 0.5);
+        weight = Math.exp(chromaFeatureSimilarity) / Math.sqrt(2*Math.PI);
     }
 
 
@@ -52,7 +53,8 @@ public class Particle {
 
     public void move() {
         position += speed;
-        speed += random.sample();
+        speed = Math.max(speed + random.nextGaussian() * 10, 0);
+
     }
 
     public double getPosition() {
@@ -74,8 +76,8 @@ public class Particle {
             segmentNorm += segmentChromaFeature[i] * segmentChromaFeature[i];
             audioNorm += audioChromaFeature[i] * audioChromaFeature[i];
         }
-        segmentNorm = Math.pow(segmentNorm, 0.5);
-        audioNorm = Math.pow(audioNorm, 0.5);
+        segmentNorm = Math.sqrt(segmentNorm);
+        audioNorm = Math.sqrt(audioNorm);
         return Math.acos(product / segmentNorm / audioNorm);
     }
 }

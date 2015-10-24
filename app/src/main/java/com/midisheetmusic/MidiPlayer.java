@@ -501,7 +501,7 @@ public class MidiPlayer extends LinearLayout {
 
         CreateMidiFile();
         playstate = playing;
-        PlaySound(tempSoundFile);
+//        PlaySound(tempSoundFile);
         startTime = SystemClock.uptimeMillis();
 
         timer.removeCallbacks(TimerCallback);

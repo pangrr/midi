@@ -39,8 +39,8 @@ public class SheetMusicActivity extends Activity {
     public static final String MidiTitleID = "MidiTitleID";
     public static final int settingsRequestCode = 1;
     
-    private MidiPlayer player;   /* The play/stop/rewind toolbar */
-    private Piano piano;         /* The piano at the top */
+    private Recorder recorder;   /* The play/stop/rewind toolbar */
+//    private Piano piano;         /* The piano at the top */
     private SheetMusic sheet;    /* The sheet music */
     private LinearLayout layout; /* THe layout */
     private MidiFile midifile;   /* The midi file to play */
@@ -58,7 +58,7 @@ public class SheetMusicActivity extends Activity {
 
         ClefSymbol.LoadImages(this);
         TimeSigSymbol.LoadImages(this);
-        MidiPlayer.LoadImages(this);
+        recorder.LoadImages(this);
 
         // Parse the MidiFile from the raw bytes
         Uri uri = this.getIntent().getData();
@@ -72,8 +72,6 @@ public class SheetMusicActivity extends Activity {
         try {
             data = file.getData(this);
             midifile = new MidiFile(data, title);
-            MidiSegments midiSegments = new MidiSegments(midifile);
-            midiSegments.writeFile("segments.txt");
         }
         catch (MidiFileException e) {
             this.finish();
@@ -98,20 +96,22 @@ public class SheetMusicActivity extends Activity {
         }
         createView();
         createSheetMusic(options);
+
     }
     
     /* Create the MidiPlayer and Piano views */
     void createView() {
         layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        player = new MidiPlayer(this);
-        piano = new Piano(this);
-        layout.addView(player);
-        layout.addView(piano);
+        recorder = new Recorder(this);
+//        piano = new Piano(this);
+        layout.addView(recorder);
+//        layout.addView(piano);
         setContentView(layout);
-        player.SetPiano(piano);
+//        recorder.SetPiano(piano);
         layout.requestLayout();
     }
+
 
     /** Create the SheetMusic view with the given options */
     private void 
@@ -119,19 +119,20 @@ public class SheetMusicActivity extends Activity {
         if (sheet != null) {
             layout.removeView(sheet);
         }
-        if (!options.showPiano) {
-            piano.setVisibility(View.GONE);
-        }
-        else {
-            piano.setVisibility(View.VISIBLE);
-        }
+//        if (!options.showPiano) {
+//            piano.setVisibility(View.GONE);
+//        }
+//        else {
+//            piano.setVisibility(View.VISIBLE);
+//        }
         sheet = new SheetMusic(this);
         sheet.init(midifile, options);
-        sheet.setPlayer(player);
+        sheet.setRecorder(recorder);
         layout.addView(sheet);
-        piano.SetMidiFile(midifile, options, player);
-        piano.SetShadeColors(options.shade1Color, options.shade2Color);
-        player.SetMidiFile(midifile, options, sheet);
+//        piano.SetMidiFile(midifile, options, recorder);
+//        piano.SetShadeColors(options.shade1Color, options.shade2Color);
+        recorder.setFft2chromaMatrix(getFFT2ChromaMatrix());
+        recorder.SetMidiFile(midifile, options, sheet);
         layout.requestLayout();
         sheet.callOnDraw();
     }
@@ -146,8 +147,8 @@ public class SheetMusicActivity extends Activity {
     /** When the menu button is pressed, initialize the menus. */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (player != null) {
-            player.Pause();
+        if (recorder != null) {
+            recorder.Pause();
         }
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sheet_menu, menu);
@@ -328,8 +329,8 @@ public class SheetMusicActivity extends Activity {
     protected void onResume() {
         super.onResume();
         layout.requestLayout();
-        player.invalidate();
-        piano.invalidate();
+        recorder.invalidate();
+//        piano.invalidate();
         if (sheet != null) {
             sheet.invalidate();
         }
@@ -339,10 +340,41 @@ public class SheetMusicActivity extends Activity {
     /** When this activity pauses, stop the music */
     @Override
     protected void onPause() {
-        if (player != null) {
-            player.Pause();
+        if (recorder != null) {
+            recorder.Pause();
         }
         super.onPause();
-    } 
+    }
+
+    private double[][] getFFT2ChromaMatrix() {
+        double[][] fft2chromaMatrix = new double[12][8192];
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(
+                    new InputStreamReader(getAssets().open("fft2chromamatrix.txt")));
+
+            // do reading, usually loop until end of file reading
+            String mLine = reader.readLine();
+            int i = 0;
+            while (mLine != null) {
+                //process line
+                String[] strArr = mLine.split(",");
+                for(int j = 0; j < strArr.length; j++) {
+                    fft2chromaMatrix[i][j] = Double.parseDouble(strArr[j]);
+                }
+                mLine = reader.readLine();
+                i++;
+            }
+        } catch (IOException e) {
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        return fft2chromaMatrix;
+    }
 }
 

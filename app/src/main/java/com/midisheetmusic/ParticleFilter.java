@@ -22,6 +22,12 @@ public class ParticleFilter {
         }
     }
 
+    /* User can set the base speed for all particles at pause.*/
+    public void setBaseSpeed(double baseSpeed) {
+        for(Particle p: particles) {
+            p.setSpeed(baseSpeed);
+        }
+    }
 
     /* Every time an audio chroma feature is given, All particles move to their next position.
      * Return the average position after this move. */

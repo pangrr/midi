@@ -123,11 +123,10 @@ public class AudioRecordTest extends Activity {
 //					DoubleFFT_1D fftDo = new DoubleFFT_1D(readBufferResult);
 					fftDo.realForwardFull(fft);
 					for(int i = 0; i < amplitude.length;  i++) {
-						amplitude[i][0] = Math.pow(Math.pow(fft[i*2], 2) + Math.pow(fft[i*2+1], 2), 0.5);
+						amplitude[i][0] = Math.sqrt(fft[i * 2] * fft[i * 2] + fft[i * 2+1] * fft[i * 2+1]);
 					}
 					
-//					double[][] fft2chromaMatrix = FFT2ChromaMatrix.getFFT2ChromaMatrix();
-					
+
 					double[][] chroma = Matrix.multiply(fft2chromaMatrix, amplitude);
 					
 					n++;

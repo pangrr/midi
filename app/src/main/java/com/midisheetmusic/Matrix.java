@@ -13,6 +13,11 @@ public class Matrix {
     double[][] C = new double[rowsInA][columnsInB];
     for (int i = 0; i < rowsInA; i++) {
         for (int j = 0; j < columnsInB; j++) {
+            C[i][j] = 0.0;
+        }
+    }
+    for (int i = 0; i < rowsInA; i++) {
+        for (int j = 0; j < columnsInB; j++) {
             for (int k = 0; k < columnsInA; k++) {
                 C[i][j] = C[i][j] + A[i][k] * B[k][j];
             }

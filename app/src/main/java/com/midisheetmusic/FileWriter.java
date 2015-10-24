@@ -38,6 +38,15 @@ public class FileWriter {
 		}
 		writeFile(fileName, sb.toString());
 	}
+
+	public static void writeShortArray(String fileName, short[] array, int length) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(Integer.toString(length) + "\n");
+		for(int i = 0; i < length; i++) {
+			sb.append(Short.toString(array[i]) + "\n");
+		}
+		writeFile(fileName, sb.toString());
+	}
 	
 	private static String note2String(MidiNote note) {
 		return Integer.toString(note.getNumber()) + "," + Integer.toString(note.getStartTime()) + "," + Integer.toString(note.getEndTime());
