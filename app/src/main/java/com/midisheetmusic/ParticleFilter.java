@@ -12,15 +12,16 @@ public class ParticleFilter {
     private MidiSegments segments;
 
 
-    public ParticleFilter(MidiSegments segments, int nParticles, double initBaseSpeed) {
+    public ParticleFilter(MidiSegments segments, int nParticles, double initBaseSpeed, int initPosition) {
         this.segments = segments;
-        int initPosition = segments.getStartTime();
+        if(initPosition <= 0) initPosition = segments.getStartTime();
 
         particles = new HashSet<Particle>();
         for(int i = 0; i < nParticles; i++) {
-            particles.add(new Particle(initPosition, initBaseSpeed, 0));
+            particles.add(new Particle(initPosition, initBaseSpeed, segments));
         }
     }
+
 
     /* User can set the base speed for all particles at pause.*/
     public void setBaseSpeed(double baseSpeed) {
@@ -34,7 +35,6 @@ public class ParticleFilter {
     public int move(double[] audioChromaFeature) {
         for(Particle p: particles) {
             p.move();
-            p.setSegment(segments);
         }
         setWeights(audioChromaFeature);
         resample();

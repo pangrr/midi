@@ -148,7 +148,7 @@ public class SheetMusicActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         if (recorder != null) {
-            recorder.Pause();
+            recorder.pause();
         }
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.sheet_menu, menu);
@@ -341,7 +341,7 @@ public class SheetMusicActivity extends Activity {
     @Override
     protected void onPause() {
         if (recorder != null) {
-            recorder.Pause();
+            recorder.pause();
         }
         super.onPause();
     }

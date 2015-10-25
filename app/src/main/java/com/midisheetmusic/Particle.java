@@ -8,18 +8,20 @@ import java.util.Random;
  * Representing a particle in particle filtering.
  */
 public class Particle {
-    private double position; // Position of this particle in the MidiFile in terms of pulse.
+    private int position; // Position of this particle in the MidiFile in terms of pulse.
     private double speed;
     private Random random;
-    private int segment;    // Position in terms of segment.
+    private MidiSegments segments;
+    private int segmentIndex;    // Position in terms of segment.
     private double weight;
 
-    public Particle(double position, double baseSpeed, int segment) {
+    public Particle(int position, double initSpeed, MidiSegments segments) {
         random = new Random();
         this.position = position;
-        this.speed = baseSpeed + random.nextGaussian();
-        this.segment = segment;
-        this.weight = 0.0;
+        this.speed = initSpeed;
+        this.segments = segments;
+        this.weight = 0;
+        updateSegmentIndex();
     }
 
     public void setSpeed(double speed) {
@@ -32,11 +34,11 @@ public class Particle {
     }
 
 
-    public void setSegment(MidiSegments segments) {
-        for(int i = segment; i < segments.getSegmentSize(); i++) {
+    private void updateSegmentIndex() {
+        for(int i = segmentIndex; i < segments.getSegmentSize(); i++) {
             Segment s = segments.getSegment(i);
             if(position >= s.getStartTime() && position < s.getEndTime()) {
-                segment = i;
+                segmentIndex = i;
                 return;
             }
         }
@@ -47,14 +49,14 @@ public class Particle {
     }
 
 
-    public int getSegment() {
-        return segment;
+    public int getSegmentIndex() {
+        return segmentIndex;
     }
 
     public void move() {
         position += speed;
-        speed = Math.max(speed + random.nextGaussian() * 10, 0);
-
+        speed += random.nextGaussian();
+        updateSegmentIndex();
     }
 
     public double getPosition() {
@@ -63,11 +65,11 @@ public class Particle {
 
     @Override
     public Particle clone() {
-        return new Particle(position, speed, segment);
+        return new Particle(position, speed, segments);
     }
 
     private double getChromaFeatureSimilarity(MidiSegments segments, double[] audioChromaFeature) {
-        double[] segmentChromaFeature = segments.getSegment(segment).getChromaFeature();
+        double[] segmentChromaFeature = segments.getSegment(segmentIndex).getChromaFeature();
         double product = 0.0;
         double segmentNorm = 0.0;
         double audioNorm = 0.0;

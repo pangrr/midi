@@ -1386,7 +1386,7 @@ public class SheetMusic extends SurfaceView implements SurfaceHolder.Callback, S
             case MotionEvent.ACTION_DOWN:
                 // If we touch while music is playing, stop the midi recorder
                 if (recorder != null && recorder.getVisibility() == View.GONE) {
-                    recorder.Pause();
+                    recorder.pause();
                     scrollAnimation.stopMotion();
                 }
                 return result;

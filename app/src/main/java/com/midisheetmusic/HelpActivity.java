@@ -27,7 +27,7 @@ public class HelpActivity extends Activity {
         setContentView(R.layout.help);
         WebView view = (WebView) findViewById(R.id.help_webview);
         view.getSettings().setJavaScriptEnabled(false);
-        view.loadUrl("file:///android_asset/help.html");
+//        view.loadUrl("file:///android_asset/help.html");
     }
 }
 

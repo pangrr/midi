@@ -5,6 +5,7 @@ import android.app.*;
 import android.content.*;
 import android.content.res.*;
 import android.graphics.*;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import android.os.*;
@@ -38,88 +39,98 @@ public class Recorder extends LinearLayout {
     double prevPulseTime;       /** Time (in pulses) music was last at */
     Activity activity;          /** The parent activity. */
 
+    private static final int N_PARTICLE = 500;
+    private static double initSpeed;
 
-    private static int nSampleRate = 44100;
-    private int blockSize = AudioRecord.getMinBufferSize(nSampleRate,
-            AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT); // 2048*2
-    private short[] readBuffer = new short[blockSize];
-    private double[] fft = new double[blockSize*8];	// 8192*2
-    private double[][] amplitude = new double[blockSize*2][1];
+    private static final int SAMPLE_RATE = 44100;
+    private static final int FRAME_SIZE = 2048; // Number of samples to process each time.
+    private int bufferSize;
+    private volatile short[] readBuffer;
+
+
+    private double[] fft;
+    private double[][] amplitude;
     private double[][] fft2chromaMatrix;
 
-    private AudioRecord recorder = null;
+    private AudioRecord recorder;
     private ParticleFilter particleFilter;
     private MidiSegments midiSegments;
 
 
+//    private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
+//
+//        public void onPeriodicNotification(AudioRecord recorder) {
+//           process();
+//        }
+//
+//        public void onMarkerReached(AudioRecord recorder) {
+//        }
+//    };
 
+    private void process() {
+        // FFT
+        for(int i = 0; i < FRAME_SIZE; i++) {
+            fft[i] = (double) readBuffer[i];
+        }
+        for(int i = FRAME_SIZE; i < fft.length; i++) {
+            fft[i] = 0.0;
+        }
+        DoubleFFT_1D fftDo = new DoubleFFT_1D(FRAME_SIZE*4);
+        fftDo.realForwardFull(fft);
+
+        // Amplitude
+        for(int i = 0; i < amplitude.length;  i++) amplitude[i][0] = Math.sqrt(fft[i * 2]*fft[i * 2] + fft[i * 2 + 1] * fft[i*2+1]);
+        // Chroma feature
+        double[][] tmp = Matrix.multiply(fft2chromaMatrix, amplitude);
+        double[] chromaFeature = new double[12];
+        for(int i = 0; i < 12; i++) chromaFeature[i] = tmp[i][0];
+
+        // Particle filter
+        prevPulseTime = currentPulseTime;
+        currentPulseTime  = particleFilter.move(chromaFeature);
+
+        // Shade notes
+        sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.GradualScroll);
+    }
+
+    class ProcessThread extends Thread {
+        @Override
+        public void run() {
+            while(getVolume(readBuffer, FRAME_SIZE) < 30000) {};
+            while(recordState == RECORDING) {
+                process();
+            }
+        }
+    }
 
     class RecordThread extends Thread {
         @Override
         public void run() {
-			/* Clear possible left-over recorder. */
+			// Clear recorder
             if (recorder != null) {
                 recorder.release();
                 recorder = null;
             }
 
-			/* Initialize recorder. */
-            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, nSampleRate,
+            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                    blockSize);
-
-			/* Initialize RECORDING state. */
+                    bufferSize);
+//            recorder.setPositionNotificationPeriod(FRAME_SIZE);
+//            recorder.setRecordPositionUpdateListener(updateListener);
             recorder.startRecording();
             recordState = RECORDING;
 
-            int n = 0;
-            StringBuffer sb = new StringBuffer();
-
-            int readBufferResult = 0;
-			/* Start RECORDING until interruption. */
-            while (recordState == RECORDING) {
-                readBufferResult = recorder.read(readBuffer, 0, blockSize);
-
-				/* Use the recorded audio raw data when record is successful. */
-                if (AudioRecord.ERROR_INVALID_OPERATION != readBufferResult) {
-                    if(n == 10) {
-                        /* Write test log here. */
-                    }
-                    double volume = getVolume(readBuffer, readBufferResult);
-
-                    if(volume < 10000) {    // Skip this frame if volume is too low.
-                        continue;
-                    }
-                    sb.append(Double.toString(volume) + "\n");
-
-					/* Do fft. */
-                    for(int i = 0; i < readBufferResult; i++) {
-                        fft[i] = (double) readBuffer[i];
-                    }
-                    for(int i = readBufferResult; i < fft.length; i++) {
-                        fft[i] = 0.0;
-                    }
-                    DoubleFFT_1D fftDo = new DoubleFFT_1D(readBufferResult*4);
-                    fftDo.realForwardFull(fft);
-                    for(int i = 0; i < amplitude.length;  i++) {
-                        amplitude[i][0] = Math.sqrt(fft[i * 2]*fft[i * 2] + fft[i * 2 + 1] * fft[i*2+1]);
-                    }
-                    double[][] tmp = Matrix.multiply(fft2chromaMatrix, amplitude);
-                    double[] chromaFeature = new double[12];
-                    for(int i = 0; i < 12; i++) {
-                        chromaFeature[i] = tmp[i][0];
-                    }
-
-                    prevPulseTime = currentPulseTime;
-                    currentPulseTime  = particleFilter.move(chromaFeature);
-
-                    sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.GradualScroll);
-                }
-                n++;
+            for(int i = 0; i < 10; i++) {
+                recorder.read(readBuffer, 0, bufferSize);
             }
-            FileWriter.writeFile("volume.txt", sb.toString());
 
-			/* Stop and clear the recorder. */
+            ProcessThread processThread = new ProcessThread();
+            processThread.start();
+
+            while (recordState == RECORDING) {
+                recorder.read(readBuffer, 0, bufferSize);
+            }
+
             recorder.stop();
             recorder.release();
             recorder = null;
@@ -127,11 +138,6 @@ public class Recorder extends LinearLayout {
     };
 
 
-
-
-    /** The callback for the play button.
-     *  If we're STOPPED or pause, then play the midi file.
-     */
     private void record() {
         if (midifile == null || sheet == null || recordState == RECORDING) {
             return;
@@ -141,20 +147,55 @@ public class Recorder extends LinearLayout {
         // to refresh, and then start playing
         this.setVisibility(View.GONE);
         if(recordState == STOPPED) {
-            particleFilter = new ParticleFilter(new MidiSegments(midifile), 1000, 120);
+            particleFilter = new ParticleFilter(midiSegments, N_PARTICLE, initSpeed, 0);
         }
 
         RecordThread recordThread = new RecordThread();
         recordThread.start();
     }
 
+    private void setInitSpeed() {
+        double timePerQuarter = midifile.getTime().getTempo();  // Microseconds per quarter note
+        double timePerFrame = 1000000 / SAMPLE_RATE * FRAME_SIZE;
+        double pulsePerQuarter = midifile.getTime().getQuarter();
+        initSpeed = timePerFrame / timePerQuarter * pulsePerQuarter;
+    }
+
+    public Recorder(Activity activity) {
+        super(activity);
+        LoadImages(activity);
+        this.activity = activity;
+        this.midifile = null;
+        this.options = null;
+        this.sheet = null;
+        recordState = STOPPED;
+        startTime = SystemClock.uptimeMillis();
+        startPulseTime = 0;
+        currentPulseTime = 0;
+        prevPulseTime = -10;
+        this.setPadding(0, 0, 0, 0);
+        CreateButtons();
+
+        int screenwidth = activity.getWindowManager().getDefaultDisplay().getWidth();
+        int screenheight = activity.getWindowManager().getDefaultDisplay().getHeight();
+        Point newsize = MidiPlayer.getPreferredSize(screenwidth, screenheight);
+        resizeButtons(newsize.x, newsize.y);
+        setBackgroundColor(Color.BLACK);
+
+        bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT); // 2048*2
+        readBuffer = new short[bufferSize];
+        fft = new double[bufferSize*8];
+        amplitude = new double[bufferSize*2][1];
+
+        recorder = null;
+    }
 
 
     /** The callback for pausing playback.
      *  If we're currently playing, pause the music.
      *  The actual pause is done when the timer is invoked.
      */
-    public void Pause() {
+    public void pause() {
         this.setVisibility(View.VISIBLE);
         LinearLayout layout = (LinearLayout)this.getParent();
         layout.requestLayout();
@@ -172,11 +213,19 @@ public class Recorder extends LinearLayout {
             return;
         }
         recordState = STOPPED;
-        sheet.ShadeNotes(0, (int)currentPulseTime, SheetMusic.ImmediateScroll);
+        moveTop();
+        clearShade();
     }
 
+    private void clearShade() {
+        sheet.ShadeNotes(-10, (int) currentPulseTime, SheetMusic.DontScroll);
+    }
 
-
+    private void moveTop() {
+        sheet.ShadeNotes(0, (int) currentPulseTime, SheetMusic.ImmediateScroll);
+        currentPulseTime = 0;
+        prevPulseTime = 0;
+    }
 
     /** Move the current position to the location clicked.
      *  The music must be in the PAUSED/STOPPED state.
@@ -184,22 +233,19 @@ public class Recorder extends LinearLayout {
      *  So, set the currentPulseTime to the position clicked.
      */
     public void MoveToClicked(int x, int y) {
-        if (midifile == null || sheet == null) {
-            return;
-        }
-        if (recordState != PAUSED && recordState != STOPPED) {
-            return;
-        }
+        if (recordState == RECORDING) return;
         recordState = PAUSED;
 
-        /* Remove any highlighted notes */
-        sheet.ShadeNotes(-10, (int)currentPulseTime, SheetMusic.DontScroll);
+        clearShade();
 
+        // Get position
         currentPulseTime = sheet.PulseTimeForPoint(new Point(x, y));
         prevPulseTime = currentPulseTime - midifile.getTime().getMeasure();
-        if (currentPulseTime > midifile.getTotalPulses()) {
-            currentPulseTime -= midifile.getTime().getMeasure();
-        }
+        if (currentPulseTime > midifile.getTotalPulses()) currentPulseTime -= midifile.getTime().getMeasure();
+
+        // Create a new particle filter at the position.
+        particleFilter = new ParticleFilter(midiSegments, N_PARTICLE, initSpeed, (int)currentPulseTime);
+
         sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.DontScroll);
     }
 
@@ -306,35 +352,13 @@ public class Recorder extends LinearLayout {
     }
 
 
-    /** Create a new MidiPlayer, displaying the play/stop buttons, and the
-     *  speed bar.  The midifile and sheetmusic are initially null.
-     */
-    public Recorder(Activity activity) {
-        super(activity);
-        LoadImages(activity);
-        this.activity = activity;
-        this.midifile = null;
-        this.options = null;
-        this.sheet = null;
-        recordState = STOPPED;
-        startTime = SystemClock.uptimeMillis();
-        startPulseTime = 0;
-        currentPulseTime = 0;
-        prevPulseTime = -10;
-        this.setPadding(0, 0, 0, 0);
-        CreateButtons();
 
-        int screenwidth = activity.getWindowManager().getDefaultDisplay().getWidth();
-        int screenheight = activity.getWindowManager().getDefaultDisplay().getHeight();
-        Point newsize = MidiPlayer.getPreferredSize(screenwidth, screenheight);
-        resizeButtons(newsize.x, newsize.y);
-        setBackgroundColor(Color.BLACK);
-    }
 
 
     public void SetMidiFile(MidiFile file, MidiOptions opt, SheetMusic s) {
         midifile = file;
         midiSegments = new MidiSegments(midifile);
+        setInitSpeed();
         options = opt;
         sheet = s;
     }
