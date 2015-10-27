@@ -39,7 +39,7 @@ public class Recorder extends LinearLayout {
     double prevPulseTime;       /** Time (in pulses) music was last at */
     Activity activity;          /** The parent activity. */
 
-    private static final int N_PARTICLE = 500;
+    private static final int N_PARTICLE = 1000;
     private static double initSpeed;
 
     private static final int SAMPLE_RATE = 44100;
@@ -97,9 +97,16 @@ public class Recorder extends LinearLayout {
         @Override
         public void run() {
             while(getVolume(readBuffer, FRAME_SIZE) < 30000) {};
+
+            StringBuffer sb = new StringBuffer();
             while(recordState == RECORDING) {
+                long startTime = System.nanoTime();
                 process();
+                long endTime = System.nanoTime();
+                sb.append((endTime - startTime) / 1000 / 1000);
+                sb.append("\n");
             }
+            FileWriter.writeFile("process_time.txt", sb.toString());
         }
     }
 
@@ -127,9 +134,15 @@ public class Recorder extends LinearLayout {
             ProcessThread processThread = new ProcessThread();
             processThread.start();
 
+            StringBuffer sb = new StringBuffer();
             while (recordState == RECORDING) {
+                long startTime = System.nanoTime();
                 recorder.read(readBuffer, 0, bufferSize);
+                long endTime = System.nanoTime();
+                sb.append((endTime - startTime) / 1000 / 1000);
+                sb.append("\n");
             }
+            FileWriter.writeFile("record_time.txt", sb.toString());
 
             recorder.stop();
             recorder.release();

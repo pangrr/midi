@@ -8,7 +8,7 @@ import java.util.Set;
  * Created by rpang on 10/19/15.
  */
 public class ParticleFilter {
-    private Set<Particle> particles;
+    private Particle[] particles;
     private MidiSegments segments;
 
 
@@ -16,9 +16,9 @@ public class ParticleFilter {
         this.segments = segments;
         if(initPosition <= 0) initPosition = segments.getStartTime();
 
-        particles = new HashSet<Particle>();
+        particles = new Particle[nParticles];
         for(int i = 0; i < nParticles; i++) {
-            particles.add(new Particle(initPosition, initBaseSpeed, segments));
+            particles[i] = new Particle(initPosition, initBaseSpeed, segments, -1);
         }
     }
 
@@ -47,26 +47,22 @@ public class ParticleFilter {
         for(Particle p: particles) {
             sum += p.getPosition();
         }
-        return sum / particles.size();
+        return sum / particles.length;
     }
 
     private void resample() {
-        Set<Particle> newParticles = new HashSet<Particle>();
+        Particle[] newParticles = new Particle[particles.length];
         double totalWeight = 0.0;
         for(Particle p: particles) {
             totalWeight += p.getWeight();
         }
 
-        for(int i = 0; i < particles.size(); i++) {
+        for(int i = 0; i < particles.length; i++) {
             double random = Math.random() * totalWeight;
             for(Particle p: particles) {
                 random -= p.getWeight();
                 if(random <= 0.0) {
-                    if(newParticles.contains(p)) {
-                        newParticles.add(p.clone());
-                    } else {
-                        newParticles.add(p);
-                    }
+                    newParticles[i] = p.clone();
                     break;
                 }
             }

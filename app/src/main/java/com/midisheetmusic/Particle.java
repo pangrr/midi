@@ -15,13 +15,13 @@ public class Particle {
     private int segmentIndex;    // Position in terms of segment.
     private double weight;
 
-    public Particle(int position, double initSpeed, MidiSegments segments) {
+    public Particle(int position, double initSpeed, MidiSegments segments, int segmentIndex) {
         random = new Random();
         this.position = position;
         this.speed = initSpeed;
         this.segments = segments;
         this.weight = 0;
-        updateSegmentIndex();
+        if(segmentIndex < 0) updateSegmentIndex();
     }
 
     public void setSpeed(double speed) {
@@ -65,7 +65,7 @@ public class Particle {
 
     @Override
     public Particle clone() {
-        return new Particle(position, speed, segments);
+        return new Particle(position, speed, segments, segmentIndex);
     }
 
     private double getChromaFeatureSimilarity(MidiSegments segments, double[] audioChromaFeature) {
