@@ -31,7 +31,6 @@ public class Recorder extends LinearLayout {
 
     MidiFile midifile;          /** The midi file to play */
     MidiOptions options;        /** The sound options for playing the midi file */
-    double pulsesPerMsec;       /** The number of pulses per millisec */
     SheetMusic sheet;           /** The sheet music to shade while playing */
     long startTime;             /** Absolute time when music started playing (msec) */
     double startPulseTime;      /** Time (in pulses) when music started playing */
@@ -56,6 +55,8 @@ public class Recorder extends LinearLayout {
     private ParticleFilter particleFilter;
     private MidiSegments midiSegments;
 
+    private StringBuffer writeStringBuffer = new StringBuffer();
+
 
 //    private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
 //
@@ -78,19 +79,33 @@ public class Recorder extends LinearLayout {
         DoubleFFT_1D fftDo = new DoubleFFT_1D(FRAME_SIZE*4);
         fftDo.realForwardFull(fft);
 
+
+
         // Amplitude
         for(int i = 0; i < amplitude.length;  i++) amplitude[i][0] = Math.sqrt(fft[i * 2]*fft[i * 2] + fft[i * 2 + 1] * fft[i*2+1]);
         // Chroma feature
         double[][] tmp = Matrix.multiply(fft2chromaMatrix, amplitude);
+        double avg = 0;
+        for(int i = 0; i < 12; i++) {
+            avg += tmp[i][0] * tmp[i][0];
+        }
+        avg = Math.sqrt(avg);
         double[] chromaFeature = new double[12];
-        for(int i = 0; i < 12; i++) chromaFeature[i] = tmp[i][0];
+        for(int i = 0; i < 12; i++) {
+            chromaFeature[i] = tmp[i][0] / avg;
+        }
 
         // Particle filter
         prevPulseTime = currentPulseTime;
         currentPulseTime  = particleFilter.move(chromaFeature);
 
+        long startTime = System.nanoTime();
         // Shade notes
         sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.GradualScroll);
+        long endTime = System.nanoTime();
+
+//        writeStringBuffer.append((endTime - startTime) / 1000 / 1000);
+//        writeStringBuffer.append("\n");
     }
 
     class ProcessThread extends Thread {
@@ -100,14 +115,19 @@ public class Recorder extends LinearLayout {
 
             StringBuffer sb = new StringBuffer();
             while(recordState == RECORDING) {
-                long startTime = System.nanoTime();
                 process();
-                long endTime = System.nanoTime();
-                sb.append((endTime - startTime) / 1000 / 1000);
-                sb.append("\n");
+                writeParticleSegments();
             }
-            FileWriter.writeFile("process_time.txt", sb.toString());
+            FileWriter.writeFile("positions.txt", writeStringBuffer.toString());
         }
+    }
+
+    private void writeParticleSegments() {
+        for(int i: particleFilter.getParticleSegmentIndex()) {
+            writeStringBuffer.append(i);
+            writeStringBuffer.append(" ");
+        }
+        writeStringBuffer.append("\n");
     }
 
     class RecordThread extends Thread {
@@ -122,8 +142,6 @@ public class Recorder extends LinearLayout {
             recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                     bufferSize);
-//            recorder.setPositionNotificationPeriod(FRAME_SIZE);
-//            recorder.setRecordPositionUpdateListener(updateListener);
             recorder.startRecording();
             recordState = RECORDING;
 
@@ -134,15 +152,9 @@ public class Recorder extends LinearLayout {
             ProcessThread processThread = new ProcessThread();
             processThread.start();
 
-            StringBuffer sb = new StringBuffer();
             while (recordState == RECORDING) {
-                long startTime = System.nanoTime();
                 recorder.read(readBuffer, 0, bufferSize);
-                long endTime = System.nanoTime();
-                sb.append((endTime - startTime) / 1000 / 1000);
-                sb.append("\n");
             }
-            FileWriter.writeFile("record_time.txt", sb.toString());
 
             recorder.stop();
             recorder.release();

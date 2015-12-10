@@ -1,6 +1,9 @@
 package com.midisheetmusic;
 
 
+import android.util.Log;
+
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -8,37 +11,39 @@ import java.util.Random;
  * Representing a particle in particle filtering.
  */
 public class Particle {
-    private int position; // Position of this particle in the MidiFile in terms of pulse.
+    private double initSpeed;
+    private int pulse; // Position of this particle in the MidiFile in terms of pulse.
     private double speed;
     private Random random;
     private MidiSegments segments;
     private int segmentIndex;    // Position in terms of segment.
     private double weight;
 
-    public Particle(int position, double initSpeed, MidiSegments segments, int segmentIndex) {
+    public Particle(int pulse, double initSpeed, double speed, MidiSegments segments, int segmentIndex) {
+        this.initSpeed = initSpeed;
+        this.speed = speed;
         random = new Random();
-        this.position = position;
-        this.speed = initSpeed;
+        this.pulse = pulse;
         this.segments = segments;
         this.weight = 0;
-        if(segmentIndex < 0) updateSegmentIndex();
+        this.segmentIndex = Math.max(0, segmentIndex);
     }
 
-    public void setSpeed(double speed) {
-        this.speed = speed;
-    }
-
-    public void setWeight(MidiSegments segments, double[] audioChromaFeature) {
-        double chromaFeatureSimilarity = getChromaFeatureSimilarity(segments, audioChromaFeature);
-        weight = Math.exp(chromaFeatureSimilarity) / Math.sqrt(2*Math.PI);
+    public void setWeight(Map<Integer, Double> weights) {
+        this.weight = weights.get(segmentIndex);
     }
 
 
     private void updateSegmentIndex() {
         for(int i = segmentIndex; i < segments.getSegmentSize(); i++) {
             Segment s = segments.getSegment(i);
-            if(position >= s.getStartTime() && position < s.getEndTime()) {
-                segmentIndex = i;
+            if(pulse >= s.getStartTime() && pulse < s.getEndTime()) {
+                if(i != segmentIndex) {
+                    speed += initSpeed/4*random.nextGaussian();
+                    speed = Math.max(speed, initSpeed/2);
+                    speed = Math.min(speed, initSpeed * 2);
+                    segmentIndex = i;
+                }
                 return;
             }
         }
@@ -54,32 +59,52 @@ public class Particle {
     }
 
     public void move() {
-        position += speed;
-        speed += random.nextGaussian();
+        // dynamic hop size
+        pulse += 0.89 * speed;
+        // set pulse upper bound
         updateSegmentIndex();
     }
 
-    public double getPosition() {
-        return position;
+    public double getPulse() {
+        return pulse;
     }
 
     @Override
     public Particle clone() {
-        return new Particle(position, speed, segments, segmentIndex);
+        Particle p =  new Particle(pulse, initSpeed, speed, segments, segmentIndex);
+        p.speed += random.nextGaussian();
+        p.speed = Math.max(p.speed, initSpeed/2);
+        p.speed = Math.min(p.speed, initSpeed * 2);
+        p.pulse += random.nextGaussian();
+        p.pulse = Math.max(p.pulse, 1);
+        speed += random.nextGaussian();
+        speed = Math.max(speed, initSpeed/2);
+        speed = Math.min(speed, initSpeed * 2);
+        pulse += random.nextGaussian();
+        pulse = Math.max(pulse, 1);
+        // set upper bound for particle pulse
+        return p;
     }
 
-    private double getChromaFeatureSimilarity(MidiSegments segments, double[] audioChromaFeature) {
-        double[] segmentChromaFeature = segments.getSegment(segmentIndex).getChromaFeature();
-        double product = 0.0;
-        double segmentNorm = 0.0;
-        double audioNorm = 0.0;
-        for(int i = 0; i < segmentChromaFeature.length; i++) {
-            product += segmentChromaFeature[i] * audioChromaFeature[i];
-            segmentNorm += segmentChromaFeature[i] * segmentChromaFeature[i];
-            audioNorm += audioChromaFeature[i] * audioChromaFeature[i];
-        }
-        segmentNorm = Math.sqrt(segmentNorm);
-        audioNorm = Math.sqrt(audioNorm);
-        return Math.acos(product / segmentNorm / audioNorm);
-    }
+//    public void setWeight(MidiSegments segments, double[] audioChromaFeature) {
+//        double chromaFeatureSimilarity = getChromaFeatureSimilarity(segments, audioChromaFeature);
+//        weight = Math.exp(chromaFeatureSimilarity) / Math.sqrt(2*Math.PI);
+//    }
+
+    // No need to compute for each particle!
+//    private double getChromaFeatureSimilarity(MidiSegments segments, double[] audioChromaFeature) {
+//        // normalize audio chroma feature
+//        double[] segmentChromaFeature = segments.getSegment(segmentIndex).getChromaFeature();
+//        double product = 0.0;
+//        double segmentNorm = 0.0;
+//        double audioNorm = 0.0;
+//        for(int i = 0; i < segmentChromaFeature.length; i++) {
+//            product += segmentChromaFeature[i] * audioChromaFeature[i];
+//            segmentNorm += segmentChromaFeature[i] * segmentChromaFeature[i];
+//            audioNorm += audioChromaFeature[i] * audioChromaFeature[i];
+//        }
+//        segmentNorm = Math.sqrt(segmentNorm);
+//        audioNorm = Math.sqrt(audioNorm);
+//        return Math.acos(product / segmentNorm / audioNorm);
+//    }
 }

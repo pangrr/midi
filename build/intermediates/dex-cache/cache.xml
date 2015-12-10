@@ -2,13 +2,6 @@
 <items version="2" >
 
     <item
-        jar="/Users/rpang/GitHub/midi/app/src/main/resources/commons-math3-3.5.jar"
-        jumboMode="false"
-        revision="23.0.1"
-        sha1="13af68e9a11576953f5c4b09436f8207be9d3a27">
-        <dex dex="/Users/rpang/GitHub/midi/app/build/intermediates/pre-dexed/debug/commons-math3-3.5-e941ee91e05f182bd2b57c90aef92c50965d55aa.jar" />
-    </item>
-    <item
         jar="/Users/rpang/GitHub/midi/app/src/main/resources/JTransforms-3.1-with-dependencies.jar"
         jumboMode="false"
         revision="23.0.1"

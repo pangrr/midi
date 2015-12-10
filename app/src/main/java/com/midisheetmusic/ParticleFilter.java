@@ -1,7 +1,12 @@
 package com.midisheetmusic;
 
 
+import android.util.Log;
+
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.InputMismatchException;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -10,25 +15,24 @@ import java.util.Set;
 public class ParticleFilter {
     private Particle[] particles;
     private MidiSegments segments;
+    private Set<Integer> particleSegmentIndex;
 
 
-    public ParticleFilter(MidiSegments segments, int nParticles, double initBaseSpeed, int initPosition) {
+    public ParticleFilter(MidiSegments segments, int nParticles, double initSpeed, int initPosition) {
         this.segments = segments;
         if(initPosition <= 0) initPosition = segments.getStartTime();
 
         particles = new Particle[nParticles];
+        double tmp = (initSpeed*2-initSpeed/2)/nParticles;
         for(int i = 0; i < nParticles; i++) {
-            particles[i] = new Particle(initPosition, initBaseSpeed, segments, -1);
+            particles[i] = new Particle(initPosition, initSpeed, initSpeed/2 + tmp*i, segments, -1);
         }
     }
 
-
-    /* User can set the base speed for all particles at pause.*/
-    public void setBaseSpeed(double baseSpeed) {
-        for(Particle p: particles) {
-            p.setSpeed(baseSpeed);
-        }
+    public Particle[] getParticles() {
+        return particles;
     }
+
 
     /* Every time an audio chroma feature is given, All particles move to their next position.
      * Return the average position after this move. */
@@ -36,19 +40,27 @@ public class ParticleFilter {
         for(Particle p: particles) {
             p.move();
         }
-        setWeights(audioChromaFeature);
+        Map<Integer, Double> weights = computeWeights(audioChromaFeature);
+        setWeights(weights);
         resample();
-        return getAvgPosition();
+        return getAvgPulse();
+    }
+
+    public Set<Integer> getParticleSegmentIndex() {
+        return particleSegmentIndex;
     }
 
     /* Get average position of all particles in terms of pulse. */
-    private int getAvgPosition() {
+    private int getAvgPulse() {
         int sum = 0;
         for(Particle p: particles) {
-            sum += p.getPosition();
+            // print particles' segments
+            sum += p.getPulse();
         }
         return sum / particles.length;
     }
+
+
 
     private void resample() {
         Particle[] newParticles = new Particle[particles.length];
@@ -71,13 +83,45 @@ public class ParticleFilter {
     }
 
 
-    private void setWeights(double[] audioChromaFeature) {
+    private void setWeights(Map<Integer, Double> weights) {
         for(Particle p: particles) {
-            p.setWeight(segments, audioChromaFeature);
+            p.setWeight(weights);
         }
     }
 
+    // Return <segmentIndex, weight>
+    private Map<Integer, Double> computeWeights(double[] audioChromaFeature) {
+        collectParticleSegmentIndex();
+        Map<Integer, Double> weights = new HashMap<Integer, Double>();
+        for(int i: particleSegmentIndex) {
+            weights.put(i, computeWeight(i, audioChromaFeature));
+        }
+        return weights;
+    }
 
+    // Get segment index for all particles
+    private void collectParticleSegmentIndex() {
+        particleSegmentIndex = new HashSet<>();
+        for(Particle p: particles) {
+            particleSegmentIndex.add(p.getSegmentIndex());
+        }
+    }
+
+    // Compute weight for given segment
+    private double computeWeight(int segmentIndex, double[] audioChromaFeature) {
+        double[] segmentChromaFeature = segments.getSegment(segmentIndex).getChromaFeature();
+        double product = 0.0;
+        double segmentNorm = 0.0;
+        double audioNorm = 0.0;
+        for(int i = 0; i < segmentChromaFeature.length; i++) {
+            product += segmentChromaFeature[i] * audioChromaFeature[i];
+            segmentNorm += segmentChromaFeature[i] * segmentChromaFeature[i];
+            audioNorm += audioChromaFeature[i] * audioChromaFeature[i];
+        }
+        segmentNorm = Math.sqrt(segmentNorm);
+        audioNorm = Math.sqrt(audioNorm);
+        return Math.acos(product / segmentNorm / audioNorm);
+    }
 
 
 }
