@@ -40,8 +40,8 @@ public class Particle {
             if(pulse >= s.getStartTime() && pulse < s.getEndTime()) {
                 if(i != segmentIndex) {
                     speed += initSpeed/4*random.nextGaussian();
-                    speed = Math.max(speed, initSpeed * 0.75);
-                    speed = Math.min(speed, initSpeed * 1.25);
+                    speed = Math.max(speed, initSpeed * 0.5);
+                    speed = Math.min(speed, initSpeed * 1.5);
                     segmentIndex = i;
                 }
                 return;
@@ -72,13 +72,13 @@ public class Particle {
     public Particle clone() {
         Particle p =  new Particle(pulse, initSpeed, speed, segments, segmentIndex);
         p.speed += random.nextGaussian();
-        p.speed = Math.max(p.speed, initSpeed * 0.75);
-        p.speed = Math.min(p.speed, initSpeed * 1.25);
+        p.speed = Math.max(p.speed, initSpeed * 0.5);
+        p.speed = Math.min(p.speed, initSpeed * 1.5);
         p.pulse += random.nextGaussian() * 1.2;
         p.pulse = Math.max(p.pulse, 1);
         speed += random.nextGaussian();
-        speed = Math.max(speed, initSpeed * 0.75);
-        speed = Math.min(speed, initSpeed * 1.25);
+        speed = Math.max(speed, initSpeed * 0.5);
+        speed = Math.min(speed, initSpeed * 1.5);
         pulse += random.nextGaussian() * 1.2;
         pulse = Math.max(pulse, 1);
         // set upper bound for particle pulse
