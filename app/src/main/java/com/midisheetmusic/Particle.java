@@ -12,14 +12,14 @@ import java.util.Random;
  */
 public class Particle {
     private double initSpeed;
-    private int pulse; // Position of this particle in the MidiFile in terms of pulse.
+    private double pulse; // Position of this particle in the MidiFile in terms of pulse.
     private double speed;
     private Random random;
     private MidiSegments segments;
     private int segmentIndex;    // Position in terms of segment.
     private double weight;
 
-    public Particle(int pulse, double initSpeed, double speed, MidiSegments segments, int segmentIndex) {
+    public Particle(double pulse, double initSpeed, double speed, MidiSegments segments, int segmentIndex) {
         this.initSpeed = initSpeed;
         this.speed = speed;
         random = new Random();
@@ -40,8 +40,8 @@ public class Particle {
             if(pulse >= s.getStartTime() && pulse < s.getEndTime()) {
                 if(i != segmentIndex) {
                     speed += initSpeed/4*random.nextGaussian();
-                    speed = Math.max(speed, initSpeed/2);
-                    speed = Math.min(speed, initSpeed * 2);
+                    speed = Math.max(speed, initSpeed * 0.75);
+                    speed = Math.min(speed, initSpeed * 1.25);
                     segmentIndex = i;
                 }
                 return;
@@ -58,9 +58,8 @@ public class Particle {
         return segmentIndex;
     }
 
-    public void move() {
-        // dynamic hop size
-        pulse += 0.89 * speed;
+    public void move(long microSec) {
+        pulse += microSec * speed;
         // set pulse upper bound
         updateSegmentIndex();
     }
@@ -73,14 +72,14 @@ public class Particle {
     public Particle clone() {
         Particle p =  new Particle(pulse, initSpeed, speed, segments, segmentIndex);
         p.speed += random.nextGaussian();
-        p.speed = Math.max(p.speed, initSpeed/2);
-        p.speed = Math.min(p.speed, initSpeed * 2);
-        p.pulse += random.nextGaussian();
+        p.speed = Math.max(p.speed, initSpeed * 0.75);
+        p.speed = Math.min(p.speed, initSpeed * 1.25);
+        p.pulse += random.nextGaussian() * 1.2;
         p.pulse = Math.max(p.pulse, 1);
         speed += random.nextGaussian();
-        speed = Math.max(speed, initSpeed/2);
-        speed = Math.min(speed, initSpeed * 2);
-        pulse += random.nextGaussian();
+        speed = Math.max(speed, initSpeed * 0.75);
+        speed = Math.min(speed, initSpeed * 1.25);
+        pulse += random.nextGaussian() * 1.2;
         pulse = Math.max(pulse, 1);
         // set upper bound for particle pulse
         return p;

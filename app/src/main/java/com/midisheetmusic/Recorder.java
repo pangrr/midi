@@ -39,7 +39,7 @@ public class Recorder extends LinearLayout {
     Activity activity;          /** The parent activity. */
 
     private static final int N_PARTICLE = 1000;
-    private static double initSpeed;
+    private static double baseSpeed;    // pulse per microsecond
 
     private static final int SAMPLE_RATE = 44100;
     private static final int FRAME_SIZE = 2048; // Number of samples to process each time.
@@ -57,6 +57,7 @@ public class Recorder extends LinearLayout {
 
     private StringBuffer writeStringBuffer = new StringBuffer();
 
+    private long readRecordDataTimestamp;
 
 //    private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
 //
@@ -68,7 +69,11 @@ public class Recorder extends LinearLayout {
 //        }
 //    };
 
+
     private void process() {
+        long microSecPassedSinceLastRead = (System.nanoTime() - readRecordDataTimestamp) / 1000;
+        readRecordDataTimestamp = System.nanoTime();
+
         // FFT
         for(int i = 0; i < FRAME_SIZE; i++) {
             fft[i] = (double) readBuffer[i];
@@ -97,12 +102,10 @@ public class Recorder extends LinearLayout {
 
         // Particle filter
         prevPulseTime = currentPulseTime;
-        currentPulseTime  = particleFilter.move(chromaFeature);
+        currentPulseTime  = particleFilter.move(chromaFeature, microSecPassedSinceLastRead);
 
-        long startTime = System.nanoTime();
         // Shade notes
         sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.GradualScroll);
-        long endTime = System.nanoTime();
 
 //        writeStringBuffer.append((endTime - startTime) / 1000 / 1000);
 //        writeStringBuffer.append("\n");
@@ -114,6 +117,8 @@ public class Recorder extends LinearLayout {
             while(getVolume(readBuffer, FRAME_SIZE) < 30000) {};
 
             StringBuffer sb = new StringBuffer();
+            readRecordDataTimestamp = System.nanoTime();
+
             while(recordState == RECORDING) {
                 process();
                 writeParticleSegments();
@@ -172,18 +177,17 @@ public class Recorder extends LinearLayout {
         // to refresh, and then start playing
         this.setVisibility(View.GONE);
         if(recordState == STOPPED) {
-            particleFilter = new ParticleFilter(midiSegments, N_PARTICLE, initSpeed, 0);
+            particleFilter = new ParticleFilter(midiSegments, N_PARTICLE, baseSpeed, 0);
         }
 
         RecordThread recordThread = new RecordThread();
         recordThread.start();
     }
 
-    private void setInitSpeed() {
-        double timePerQuarter = midifile.getTime().getTempo();  // Microseconds per quarter note
-        double timePerFrame = 1000000 / SAMPLE_RATE * FRAME_SIZE;
+    private void setInitSpeed() {   // pulse per microsecond
+        double microSecPerQuarter = midifile.getTime().getTempo();
         double pulsePerQuarter = midifile.getTime().getQuarter();
-        initSpeed = timePerFrame / timePerQuarter * pulsePerQuarter;
+        baseSpeed = pulsePerQuarter/microSecPerQuarter;
     }
 
     public Recorder(Activity activity) {
@@ -269,7 +273,7 @@ public class Recorder extends LinearLayout {
         if (currentPulseTime > midifile.getTotalPulses()) currentPulseTime -= midifile.getTime().getMeasure();
 
         // Create a new particle filter at the position.
-        particleFilter = new ParticleFilter(midiSegments, N_PARTICLE, initSpeed, (int)currentPulseTime);
+        particleFilter = new ParticleFilter(midiSegments, N_PARTICLE, baseSpeed, (int)currentPulseTime);
 
         sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.DontScroll);
     }

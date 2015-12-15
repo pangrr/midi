@@ -18,14 +18,14 @@ public class ParticleFilter {
     private Set<Integer> particleSegmentIndex;
 
 
-    public ParticleFilter(MidiSegments segments, int nParticles, double initSpeed, int initPosition) {
+    public ParticleFilter(MidiSegments segments, int nParticles, double baseSpeed, int initPosition) {
         this.segments = segments;
         if(initPosition <= 0) initPosition = segments.getStartTime();
 
         particles = new Particle[nParticles];
-        double tmp = (initSpeed*2-initSpeed/2)/nParticles;
+        double tmp = (baseSpeed*2-baseSpeed/2)/nParticles;
         for(int i = 0; i < nParticles; i++) {
-            particles[i] = new Particle(initPosition, initSpeed, initSpeed/2 + tmp*i, segments, -1);
+            particles[i] = new Particle(initPosition, baseSpeed, baseSpeed/2 + tmp*i, segments, -1);
         }
     }
 
@@ -36,9 +36,9 @@ public class ParticleFilter {
 
     /* Every time an audio chroma feature is given, All particles move to their next position.
      * Return the average position after this move. */
-    public int move(double[] audioChromaFeature) {
+    public int move(double[] audioChromaFeature, long microSecPassedSinceLastRead) {
         for(Particle p: particles) {
-            p.move();
+            p.move(microSecPassedSinceLastRead);
         }
         Map<Integer, Double> weights = computeWeights(audioChromaFeature);
         setWeights(weights);
@@ -52,12 +52,12 @@ public class ParticleFilter {
 
     /* Get average position of all particles in terms of pulse. */
     private int getAvgPulse() {
-        int sum = 0;
+        double sum = 0.0;
         for(Particle p: particles) {
             // print particles' segments
             sum += p.getPulse();
         }
-        return sum / particles.length;
+        return (int) sum / particles.length;
     }
 
 
