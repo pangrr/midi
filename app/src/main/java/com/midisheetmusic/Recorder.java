@@ -104,8 +104,11 @@ public class Recorder extends LinearLayout {
         prevPulseTime = currentPulseTime;
         currentPulseTime  = particleFilter.move(chromaFeature, microSecPassedSinceLastRead);
 
+        // record segment weights
+//        writeParticleSegmentsWeight();
+
         // Shade notes
-        sheet.ShadeNotes((int)currentPulseTime, (int)prevPulseTime, SheetMusic.GradualScroll);
+        sheet.ShadeNotes((int) currentPulseTime, (int) prevPulseTime, SheetMusic.GradualScroll);
 
 //        writeStringBuffer.append((endTime - startTime) / 1000 / 1000);
 //        writeStringBuffer.append("\n");
@@ -121,15 +124,23 @@ public class Recorder extends LinearLayout {
 
             while(recordState == RECORDING) {
                 process();
-                writeParticleSegments();
+//                writeParticleSegments();
             }
-            FileWriter.writeFile("positions.txt", writeStringBuffer.toString());
+            FileWriter.writeFile("segmentWeight.txt", writeStringBuffer.toString());
         }
     }
 
     private void writeParticleSegments() {
         for(int i: particleFilter.getParticleSegmentIndex()) {
             writeStringBuffer.append(i);
+            writeStringBuffer.append(" ");
+        }
+        writeStringBuffer.append("\n");
+    }
+
+    private void writeParticleSegmentsWeight() {
+        for(int segmentIndex: particleFilter.segmentWeight.keySet()) {
+            writeStringBuffer.append(Integer.toString(segmentIndex) + ":" + Double.toString(((double)Math.round(particleFilter.segmentWeight.get(segmentIndex) * 1000)) / 1000));
             writeStringBuffer.append(" ");
         }
         writeStringBuffer.append("\n");

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Created by rpang on 10/19/15.
@@ -16,6 +17,7 @@ public class ParticleFilter {
     private Particle[] particles;
     private MidiSegments segments;
     private Set<Integer> particleSegmentIndex;
+    public TreeMap<Integer, Double> segmentWeight;
 
 
     public ParticleFilter(MidiSegments segments, int nParticles, double baseSpeed, int initPosition) {
@@ -40,11 +42,14 @@ public class ParticleFilter {
         for(Particle p: particles) {
             p.move(microSecPassedSinceLastRead);
         }
-        Map<Integer, Double> weights = computeWeights(audioChromaFeature);
-        setWeights(weights);
+//        Map<Integer, Double> weights = computeWeights(audioChromaFeature);
+//        setWeights(weights);
+        segmentWeight = computeWeights(audioChromaFeature);
+        setWeights(segmentWeight);
         resample();
         return getAvgPulse();
     }
+
 
     public Set<Integer> getParticleSegmentIndex() {
         return particleSegmentIndex;
@@ -83,19 +88,29 @@ public class ParticleFilter {
     }
 
 
-    private void setWeights(Map<Integer, Double> weights) {
+    private void setWeights(TreeMap<Integer, Double> weights) {
         for(Particle p: particles) {
             p.setWeight(weights);
         }
     }
 
     // Return <segmentIndex, weight>
-    private Map<Integer, Double> computeWeights(double[] audioChromaFeature) {
+    private TreeMap<Integer, Double> computeWeights(double[] audioChromaFeature) {
         collectParticleSegmentIndex();
-        Map<Integer, Double> weights = new HashMap<Integer, Double>();
+        TreeMap<Integer, Double> weights = new TreeMap<Integer, Double>();
         for(int i: particleSegmentIndex) {
             weights.put(i, computeWeight(i, audioChromaFeature));
         }
+        // normalize
+//        double sum = 0;
+//        for(int i: particleSegmentIndex) {
+//            sum += weights.get(i);
+//        }
+//        double multiplier = 1/ sum;
+//        for(int i: particleSegmentIndex) {
+//            weights.put(i, weights.get(i) * multiplier);
+//        }
+
         return weights;
     }
 
@@ -120,7 +135,8 @@ public class ParticleFilter {
         }
         segmentNorm = Math.sqrt(segmentNorm);
         audioNorm = Math.sqrt(audioNorm);
-        return Math.acos(product / segmentNorm / audioNorm);
+        double alpha = Math.acos(product / segmentNorm / audioNorm);
+        return Math.exp(-alpha*alpha);
     }
 
 
